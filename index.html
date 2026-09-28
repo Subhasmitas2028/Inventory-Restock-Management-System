@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inventory Restock Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f5f2;--card:#fff;--ink:#17231f;--mute:#66736e;--line:#dde3df;--pri:#0f6b5c;--priT:#fff;--warn:#c9760a;--warnBg:#fdf1de;--bad:#b3261e;--good:#1b7f45;--side:#12332c;--sideT:#cfe3dc;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1715;--card:#17211e;--ink:#e6efeb;--mute:#8fa39b;--line:#28352f;--pri:#3fbfa8;--priT:#08201b;--warn:#f0a541;--warnBg:#33270f;--bad:#f2867f;--good:#5fd18c;--side:#0a1210;--sideT:#9fb8af}}
+:root[data-theme="dark"]{--bg:#0f1715;--card:#17211e;--ink:#e6efeb;--mute:#8fa39b;--line:#28352f;--pri:#3fbfa8;--priT:#08201b;--warn:#f0a541;--warnBg:#33270f;--bad:#f2867f;--good:#5fd18c;--side:#0a1210;--sideT:#9fb8af}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Manrope,system-ui,sans-serif;display:flex;min-height:100vh}
+aside{width:220px;background:var(--side);color:var(--sideT);padding:18px 12px;position:sticky;top:0;height:100vh;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+aside h1{font-size:16px;font-weight:800;color:#fff;margin:0 8px 14px;line-height:1.2}
+aside a{color:inherit;text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:600}
+aside a.on{background:var(--pri);color:var(--priT)}aside a:hover:not(.on){background:rgba(255,255,255,.08)}
+.wrap{flex:1;min-width:0}
+header{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+header b{font-size:18px;font-weight:800;flex:1}
+main{padding:24px;max-width:1150px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat small{color:var(--mute);font-weight:600}.stat div{font-size:26px;font-weight:800}
+.stat.alert{background:var(--warnBg);border-color:var(--warn)}.stat.alert div{color:var(--warn)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:18px}
+.card h3{margin:0 0 10px;font-size:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--mute);font-weight:600}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-width:100%}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.p{background:var(--pri);color:var(--priT);border-color:var(--pri)}button.d{color:var(--bad)}button.s{padding:4px 10px;font-size:13px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.tag{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700}.low{background:var(--warnBg);color:var(--warn)}.ok{color:var(--good)}.out{color:var(--bad)}
+.chart{display:flex;align-items:flex-end;gap:10px;height:160px}.chart div{flex:1;text-align:center;font-size:12px;color:var(--mute)}
+.chart i{display:block;background:var(--pri);border-radius:5px 5px 0 0;margin-bottom:4px;min-height:2px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:20px;width:min(420px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.45)}dialog label{display:block;margin:8px 0 2px;font-weight:600;font-size:13px}dialog input,dialog select{width:100%}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:20px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;display:none;z-index:9}
+.empty{color:var(--mute);padding:14px 0}
+@media(max-width:800px){body{flex-direction:column}aside{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;padding:10px}aside h1{display:none}aside a{white-space:nowrap}.two{grid-template-columns:1fr}main{padding:14px}}
+@media print{aside,header,.np{display:none!important}body{display:block}}
+</style>
+</head>
+<body>
+<aside id="nav"></aside>
+<div class="wrap">
+<header><b id="ttl"></b><input id="gs" class="np" placeholder="Search all products" type="search"><button id="th" class="np" title="Toggle dark mode">Dark mode</button></header>
+<main id="main"></main>
+</div>
+<dialog id="dlg"></dialog><div id="toast"></div>
+<script>
+const today=(o=0)=>new Date(Date.now()-o*864e5).toISOString().slice(0,10);
+const seed=()=>({products:[
+{id:1,name:"Basmati Rice 5kg",cat:"Grocery",bar:"890100010001",cost:320,price:399,stock:4,min:10,sup:1},
+{id:2,name:"Sunflower Oil 1L",cat:"Grocery",bar:"890100010002",cost:110,price:135,stock:26,min:12,sup:1},
+{id:3,name:"Notebook A5",cat:"Stationery",bar:"890100010003",cost:28,price:45,stock:9,min:15,sup:2},
+{id:4,name:"Gel Pen (Blue)",cat:"Stationery",bar:"890100010004",cost:6,price:10,stock:140,min:50,sup:2},
+{id:5,name:"Hand Soap 250ml",cat:"Household",bar:"890100010005",cost:42,price:60,stock:0,min:8,sup:1}],
+suppliers:[{id:1,name:"Utkal Wholesale",phone:"9000000001",email:""},{id:2,name:"Paper Hub",phone:"9000000002",email:""}],
+customers:[{id:1,name:"Walk-in Customer",phone:"",email:""},{id:2,name:"Anita Das",phone:"9000000003",email:""}],
+sales:[{id:1,date:today(2),cust:1,items:[{p:2,q:3,pr:135,c:110}],disc:0,tax:5,total:425.25},{id:2,date:today(1),cust:2,items:[{p:4,q:20,pr:10,c:6}],disc:0,tax:5,total:210},{id:3,date:today(),cust:1,items:[{p:1,q:2,pr:399,c:320}],disc:5,tax:5,total:795.9}],
+purchases:[],hist:[{d:today(3),p:1,t:"in",q:20,n:"Opening stock"}],
+set:{store:"My Store",cur:"₹",tax:5},nid:10});
+let S,mem=null;
+function load(){try{const r=localStorage.getItem("irms");S=r?JSON.parse(r):seed()}catch(e){S=mem||seed()}save()}
+function save(){mem=S;try{localStorage.setItem("irms",JSON.stringify(S))}catch(e){}}
+const $=s=>document.querySelector(s),fmt=n=>S.set.cur+(+n).toFixed(2),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const P=id=>S.products.find(p=>p.id==id)||{name:"(deleted)",stock:0},nm=(l,id)=>(S[l].find(x=>x.id==id)||{name:"-"}).name;
+const toast=m=>{const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t._t);t._t=setTimeout(()=>t.style.display="none",2200)};
+const status=p=>p.stock<=0?'<span class="tag low out">Out of stock</span>':p.stock<=p.min?'<span class="tag low">Low</span>':'<span class="tag ok">In stock</span>';
+const need=p=>Math.max(p.min*2-p.stock,1);
+const lowList=()=>S.products.filter(p=>p.stock<=p.min).sort((a,b)=>a.stock/a.min-b.stock/b.min);
+function csv(name,rows){const t=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download=name+".csv";a.click()}
+function tbl(head,rows){return rows.length?`<div class="tw"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:'<div class="empty">Nothing here yet.</div>'}
+function modal(title,fields,vals,ok){
+$("#dlg").innerHTML=`<h3 style="margin-top:0">${title}</h3>${fields.map(f=>`<label>${f.l}</label>${f.o?`<select id="f_${f.k}">${f.o.map(o=>`<option value="${o[0]}" ${o[0]==vals[f.k]?"selected":""}>${esc(o[1])}</option>`).join("")}</select>`:`<input id="f_${f.k}" type="${f.t||"text"}" step="any" value="${esc(vals[f.k]??"")}">`}`).join("")}<div class="bar" style="margin:16px 0 0;justify-content:flex-end"><button onclick="dlg.close()">Cancel</button><button class="p" id="okb">Save</button></div>`;
+$("#okb").onclick=()=>{const o={};fields.forEach(f=>{let v=$("#f_"+f.k).value;o[f.k]=(f.t==="number"||f.n)?+v:v});if(fields.some(f=>f.r&&!String(o[f.k]).trim()))return toast("Fill in the required fields");if(ok(o)!==false)dlg.close()};
+dlg.showModal()}
+const supOpts=()=>S.suppliers.map(s=>[s.id,s.name]),prodOpts=()=>S.products.map(p=>[p.id,`${p.name} (${p.stock} in stock)`]),custOpts=()=>S.customers.map(c=>[c.id,c.name]);
+function adjust(pid,t,q,n){const p=P(pid);if(t==="out"&&q>p.stock)return toast("Only "+p.stock+" in stock"),false;p.stock+=t==="in"?q:-q;S.hist.unshift({d:today(),p:+pid,t,q,n:n||""});return true}
+
+/* ---------- Views ---------- */
+const V={};
+V.dashboard=()=>{
+const sum=a=>a.reduce((s,x)=>s+x.total,0),td=S.sales.filter(s=>s.date===today()),low=lowList();
+const days=[...Array(7)].map((_,i)=>today(6-i)),vals=days.map(d=>sum(S.sales.filter(s=>s.date===d))),mx=Math.max(...vals,1);
+const rec=[...S.sales.map(s=>({d:s.date,k:"Sale",x:nm("customers",s.cust),a:s.total,id:s.id})),...S.purchases.map(s=>({d:s.date,k:"Purchase",x:nm("suppliers",s.sup),a:s.qty*s.cost,id:s.id}))].sort((a,b)=>b.d.localeCompare(a.d)||b.id-a.id).slice(0,6);
+return`<div class="grid"><div class="stat"><small>Total products</small><div>${S.products.length}</div></div><div class="stat"><small>Total sales</small><div>${fmt(sum(S.sales))}</div></div><div class="stat"><small>Today's sales</small><div>${fmt(sum(td))}</div></div><div class="stat ${low.length?"alert":""}"><small>Items to restock</small><div>${low.length}</div></div></div>
+<div class="card"><h3>Restock list</h3>${low.length?tbl(["Product","Stock","Reorder level","Suggested order","Supplier",""],low.map(p=>[esc(p.name),p.stock,p.min,need(p),esc(nm("suppliers",p.sup)),`<button class="s p" onclick="orderFor(${p.id})">Order now</button>`])):'<div class="empty">Every product is above its reorder level.</div>'}</div>
+<div class="two"><div class="card"><h3>Sales, last 7 days</h3><div class="chart">${vals.map((v,i)=>`<div title="${fmt(v)}"><i style="height:${v/mx*120}px"></i>${days[i].slice(5)}</div>`).join("")}</div></div>
+<div class="card"><h3>Recent transactions</h3>${tbl(["Date","Type","Party","Amount"],rec.map(r=>[r.d,r.k,esc(r.x),fmt(r.a)]))}</div></div>`};
+
+V.products=()=>{
+const q=(V._q||"").toLowerCase(),c=V._c||"";const cats=[...new Set(S.products.map(p=>p.cat))];
+const rows=S.products.filter(p=>(!c||p.cat===c)&&(!q||(p.name+p.bar+p.cat).toLowerCase().includes(q)));
+return`<div class="bar np"><input id="q" type="search" placeholder="Search name, category or barcode" value="${esc(V._q||"")}" oninput="V._q=this.value;keep()"><select onchange="V._c=this.value;render()"><option value="">All categories</option>${cats.map(x=>`<option ${x===c?"selected":""}>${esc(x)}</option>`).join("")}</select><button class="p" onclick="editP()">Add product</button></div>
+<div class="card">${tbl(["Product","Category","Barcode","Cost","Price","Stock","Status",""],rows.map(p=>[esc(p.name),esc(p.cat),esc(p.bar),fmt(p.cost),fmt(p.price),p.stock,status(p),`<button class="s" onclick="editP(${p.id})">Edit</button> <button class="s d" onclick="delX('products',${p.id})">Delete</button>`]))}</div>`};
+function keep(){const s=$("#q").selectionStart;render();const e=$("#q");e.focus();e.setSelectionRange(s,s)}
+function editP(id){const p=S.products.find(x=>x.id==id)||{cat:"General",cost:0,price:0,stock:0,min:5,sup:S.suppliers[0]?.id};
+modal(id?"Edit product":"Add product",[{k:"name",l:"Name",r:1},{k:"cat",l:"Category"},{k:"bar",l:"Barcode"},{k:"cost",l:"Cost price",t:"number"},{k:"price",l:"Selling price",t:"number"},{k:"stock",l:"Opening stock",t:"number"},{k:"min",l:"Reorder level",t:"number"},{k:"sup",l:"Supplier",o:supOpts(),n:1}],p,o=>{id?Object.assign(p,o):S.products.push({id:S.nid++,...o});save();render();toast("Product saved")})}
+function delX(l,id){if(!confirm("Delete this record?"))return;S[l]=S[l].filter(x=>x.id!=id);save();render()}
+
+V.inventory=()=>`<div class="bar np"><button class="p" onclick="stock('in')">Stock in</button><button onclick="stock('out')">Stock out</button></div>
+<div class="card"><h3>Low stock alerts</h3>${tbl(["Product","Stock","Reorder level","Status"],lowList().map(p=>[esc(p.name),p.stock,p.min,status(p)]))}</div>
+<div class="card"><h3>Stock history</h3>${tbl(["Date","Product","Movement","Qty","Note"],S.hist.slice(0,40).map(h=>[h.d,esc(P(h.p).name),h.t==="in"?"Stock in":"Stock out",h.q,esc(h.n)]))}</div>`;
+function stock(t){modal(t==="in"?"Stock in":"Stock out",[{k:"p",l:"Product",o:prodOpts()},{k:"q",l:"Quantity",t:"number"},{k:"n",l:"Note"}],{q:1},o=>{if(o.q<=0)return toast("Enter a quantity above 0"),false;if(!adjust(o.p,t,o.q,o.n))return false;save();render();toast("Stock updated")})}
+
+let cart=[];
+V.sales=()=>{const sub=cart.reduce((s,i)=>s+i.q*i.pr,0);V._d??=0;const dsc=sub*V._d/100,tx=(sub-dsc)*S.set.tax/100;
+return`<div class="card np"><h3>Create invoice</h3><div class="bar"><select id="cu">${custOpts().map(o=>`<option value="${o[0]}">${esc(o[1])}</option>`).join("")}</select><select id="ip">${S.products.filter(p=>p.stock>0).map(p=>`<option value="${p.id}">${esc(p.name)} (${p.stock})</option>`).join("")}</select><input id="iq" type="number" min="1" value="1" style="width:80px"><button onclick="addI()">Add item</button></div>
+${cart.length?tbl(["Item","Qty","Price","Total",""],cart.map((i,n)=>[esc(P(i.p).name),i.q,fmt(i.pr),fmt(i.q*i.pr),`<button class="s d" onclick="cart.splice(${n},1);render()">Remove</button>`])):'<div class="empty">Add items to start an invoice.</div>'}
+<div class="bar" style="margin-top:12px">Discount % <input type="number" min="0" max="100" value="${V._d}" style="width:80px" onchange="V._d=+this.value;render()"> <span>Subtotal ${fmt(sub)} · Tax ${S.set.tax}% ${fmt(tx)} · <b>Total ${fmt(sub-dsc+tx)}</b></span><button class="p" onclick="saveS()">Save invoice</button></div></div>
+<div class="card"><h3>Invoices</h3>${tbl(["#","Date","Customer","Items","Total",""],[...S.sales].reverse().map(s=>[s.id,s.date,esc(nm("customers",s.cust)),s.items.length,fmt(s.total),`<button class="s np" onclick="inv(${s.id})">Print invoice</button>`]))}</div>`};
+function addI(){const p=P($("#ip").value),q=+$("#iq").value,ex=cart.find(i=>i.p==p.id);if(!p.id||q<1)return;if(q+(ex?ex.q:0)>p.stock)return toast("Only "+p.stock+" in stock");ex?ex.q+=q:cart.push({p:p.id,q,pr:p.price,c:p.cost});keepC();render()}
+let keepC=()=>{V._cu=$("#cu")?.value};
+function saveS(){if(!cart.length)return toast("Add at least one item");const sub=cart.reduce((s,i)=>s+i.q*i.pr,0),d=sub*V._d/100,tax=S.set.tax,total=+((sub-d)*(1+tax/100)).toFixed(2);
+cart.forEach(i=>adjust(i.p,"out",i.q,"Sale"));const id=S.nid++;S.sales.push({id,date:today(),cust:+$("#cu").value,items:cart.map(i=>({p:i.p,q:i.q,pr:i.pr,c:i.c})),disc:V._d,tax,total});cart=[];V._d=0;save();render();toast("Invoice saved");inv(id)}
+function inv(id){const s=S.sales.find(x=>x.id==id),sub=s.items.reduce((a,i)=>a+i.q*i.pr,0);
+$("#dlg").innerHTML=`<h3 style="margin-top:0">${esc(S.set.store)} — Invoice ${s.id}</h3><p>${s.date} · ${esc(nm("customers",s.cust))}</p>${tbl(["Item","Qty","Price","Total"],s.items.map(i=>[esc(P(i.p).name),i.q,fmt(i.pr),fmt(i.q*i.pr)]))}<p>Subtotal ${fmt(sub)}<br>Discount ${s.disc}%<br>Tax ${s.tax}%<br><b>Total ${fmt(s.total)}</b></p><div class="bar np" style="justify-content:flex-end"><button onclick="dlg.close()">Close</button><button class="p" onclick="window.print()">Print</button></div>`;dlg.showModal()}
+
+V.purchases=()=>`<div class="bar np"><button class="p" onclick="buy()">New purchase</button></div><div class="card">${tbl(["#","Date","Supplier","Product","Qty","Unit cost","Total"],[...S.purchases].reverse().map(x=>[x.id,x.date,esc(nm("suppliers",x.sup)),esc(P(x.p).name),x.qty,fmt(x.cost),fmt(x.qty*x.cost)]))}</div>`;
+function buy(pid){const p=pid?P(pid):{};modal("New purchase",[{k:"sup",l:"Supplier",o:supOpts(),n:1},{k:"p",l:"Product",o:S.products.map(x=>[x.id,x.name]),n:1},{k:"qty",l:"Quantity",t:"number"},{k:"cost",l:"Unit cost",t:"number"}],{sup:p.sup,p:pid,qty:pid?need(p):1,cost:p.cost||0},o=>{if(o.qty<=0)return toast("Enter a quantity above 0"),false;const id=S.nid++;S.purchases.push({id,date:today(),...o});adjust(o.p,"in",o.qty,"Purchase "+id);const pr=P(o.p);if(o.cost)pr.cost=o.cost;save();render();toast("Purchase saved, stock updated")})}
+function orderFor(id){go("purchases");buy(id)}
+
+const ent=(l,title)=>()=>`<div class="bar np"><button class="p" onclick="editE('${l}')">Add ${title}</button></div><div class="card">${tbl(["Name","Phone","Email",""],S[l].map(x=>[esc(x.name),esc(x.phone),esc(x.email),`<button class="s" onclick="editE('${l}',${x.id})">Edit</button> <button class="s d" onclick="delX('${l}',${x.id})">Delete</button>`]))}</div>`;
+V.customers=ent("customers","customer");V.suppliers=ent("suppliers","supplier");
+function editE(l,id){const x=S[l].find(v=>v.id==id)||{};modal(id?"Edit":"Add",[{k:"name",l:"Name",r:1},{k:"phone",l:"Phone"},{k:"email",l:"Email"}],x,o=>{id?Object.assign(x,o):S[l].push({id:S.nid++,...o});save();render()})}
+
+V.reports=()=>{const t=V._t||"sales";const tabs=["sales","stock","profit"].map(x=>`<button class="${x===t?"p":""}" onclick="V._t='${x}';render()">${x[0].toUpperCase()+x.slice(1)} report</button>`).join(" ");let h,r;
+if(t==="sales"){h=["#","Date","Customer","Total"];r=S.sales.map(s=>[s.id,s.date,nm("customers",s.cust),s.total.toFixed(2)])}
+else if(t==="stock"){h=["Product","Category","Stock","Reorder level","Value at cost"];r=S.products.map(p=>[p.name,p.cat,p.stock,p.min,(p.stock*p.cost).toFixed(2)])}
+else{h=["#","Date","Revenue","Cost","Profit"];r=S.sales.map(s=>{const rev=s.items.reduce((a,i)=>a+i.q*i.pr,0)*(1-s.disc/100),c=s.items.reduce((a,i)=>a+i.q*i.c,0);return[s.id,s.date,rev.toFixed(2),c.toFixed(2),(rev-c).toFixed(2)]})}
+V._r=[h,...r];return`<div class="bar np">${tabs}<button onclick="csv('${t}-report',V._r)">Export CSV</button></div><div class="card">${tbl(h,r)}</div>`};
+
+V.settings=()=>`<div class="card" style="max-width:480px"><h3>Store settings</h3><label>Store name</label><br><input id="s1" value="${esc(S.set.store)}"><br><label>Currency symbol</label><br><input id="s2" value="${esc(S.set.cur)}"><br><label>Tax rate (%)</label><br><input id="s3" type="number" value="${S.set.tax}"><br><br><button class="p" onclick="S.set={store:$('#s1').value,cur:$('#s2').value,tax:+$('#s3').value};save();toast('Settings saved')">Save settings</button></div>
+<div class="card" style="max-width:480px"><h3>Backup and restore</h3><div class="bar"><button onclick="bk()">Download backup</button><input type="file" accept=".json" onchange="rs(this)"></div><button class="d" onclick="if(confirm('Reset all data to the sample data?')){S=seed();save();render()}">Reset to sample data</button></div>`;
+function bk(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:"application/json"}));a.download="inventory-backup.json";a.click()}
+function rs(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.products)throw 0;S=d;save();render();toast("Backup restored")}catch(e){toast("That file is not a valid backup")}};r.readAsText(f)}
+
+/* ---------- Shell ---------- */
+const NAV=[["dashboard","Dashboard"],["products","Products"],["inventory","Inventory"],["sales","Sales"],["purchases","Purchases"],["customers","Customers"],["suppliers","Suppliers"],["reports","Reports"],["settings","Settings"]];
+const cur=()=>NAV.some(n=>n[0]===location.hash.slice(1))?location.hash.slice(1):"dashboard";
+function go(v){location.hash=v;render()}
+function render(){const v=cur();$("#nav").innerHTML=`<h1>${esc(S.set.store)}<br><small style="font-weight:600;opacity:.7">Restock Management</small></h1>`+NAV.map(n=>`<a href="#${n[0]}" class="${n[0]===v?"on":""}">${n[1]}</a>`).join("");$("#ttl").textContent=NAV.find(n=>n[0]===v)[1];$("#main").innerHTML=V[v]()}
+addEventListener("hashchange",render);
+$("#gs").oninput=e=>{V._q=e.target.value;if(cur()!=="products")go("products");else keep()};
+document.addEventListener("keydown",e=>{if(e.altKey&&/[1-9]/.test(e.key)){go(NAV[+e.key-1][0])}if(e.key==="/"&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$("#gs").focus()}});
+$("#th").onclick=()=>{const r=document.documentElement,d=(r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark";r.dataset.theme=d?"light":"dark";try{localStorage.setItem("irms-theme",r.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem("irms-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
+load();render();
+</script>
+</body>
+</html>
